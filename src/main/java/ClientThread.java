@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.NoRouteToHostException;
 import java.net.URL;
 import java.util.concurrent.*;
 
@@ -124,8 +125,12 @@ public class ClientThread extends Thread {
         }
       }
 
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (NoRouteToHostException e) {
+      logger.error("No route to host.");
+      code = HttpURLConnection.HTTP_BAD_REQUEST;
+      SharedMeasure.numOfUnsuccessfulRequests.incrementAndGet();
+    } catch (IOException e) {
+      logger.error("IO Exception triggered.");
     } finally {
       if (connection != null) {
         connection.disconnect();

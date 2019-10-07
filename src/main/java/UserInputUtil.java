@@ -44,6 +44,12 @@ public class UserInputUtil {
     logger.debug("Number of ski lifts: " + Constant.NUM_OF_SKI_LIFTS);
     logger.debug("Number of ski lift for each skier: "+Constant.NUM_OF_SKI_LIFTS_FOR_EACH_SKIER_EACH_DAY);
     logger.debug("Port number: " + Constant.PORT);
+    Constant.START_UP_RUN_FACTOR = (int) (Constant.NUM_OF_SKI_LIFTS_FOR_EACH_SKIER_EACH_DAY * 0.1);
+    Constant.PEAK_RUN_FACTOR = (int) (Constant.NUM_OF_SKI_LIFTS_FOR_EACH_SKIER_EACH_DAY * 0.8);
+    Constant.COOLDOWN_RUN_FACTOR = (int) (Constant.NUM_OF_SKI_LIFTS_FOR_EACH_SKIER_EACH_DAY * 0.1);
+    Constant.START_UP_CRITERIA = (int) Math.ceil(Constant.MAXIMUM_THREADS/4 * 0.1);
+    Constant.PEAK_CRITERIA = (int) Math.ceil(Constant.MAXIMUM_THREADS * 0.1);
+    Constant.COOLDOWN_CRITERIA = (int) Math.ceil(Constant.MAXIMUM_THREADS/4 * 0.1);
 
   }
 
