@@ -90,8 +90,9 @@ public class Main {
   private static void writeMeasuresIntoFile(BlockingQueue<SingleThreadMeasure> queue,
                                             List<Long> finalList) throws IOException {
 
+    String path = Constant.ENV == 0 ? Constant.CSV_FILE_PATH : Constant.EC2_FILE_PATH;
     try (
-      Writer writer = Files.newBufferedWriter(Paths.get(Constant.CSV_FILE_PATH));
+      Writer writer = Files.newBufferedWriter(Paths.get(path));
 
       CSVWriter csvWriter = new CSVWriter(writer,
               CSVWriter.DEFAULT_SEPARATOR,

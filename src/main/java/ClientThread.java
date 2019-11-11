@@ -2,6 +2,7 @@ import com.google.gson.JsonObject;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import com.mashape.unirest.request.HttpRequest;
 import com.mashape.unirest.request.HttpRequestWithBody;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,7 +57,7 @@ public class ClientThread extends Thread {
   }
 
   private String buildTargetUrl() {
-    int resortId = ThreadLocalRandom.current().nextInt(0, 11);
+    int resortId = ThreadLocalRandom.current().nextInt(1, 13);
     int seasonId = ThreadLocalRandom.current().nextInt(2016, 2020);
     int dayId = ThreadLocalRandom.current().nextInt(1, 366);
     logger.debug("start Skier id is " + startSkierId + ", and endSkierId is " + endSkierId);
@@ -82,13 +83,17 @@ public class ClientThread extends Thread {
   private void doPost(String targetUrl, JsonObject body) {
     logger.debug("Begin posting");
     long startTimestamp = System.currentTimeMillis();
-    int code = executeConnection(targetUrl, body);
+    int code = executePostConnection(targetUrl, body);
     long endTimestamp = System.currentTimeMillis();
     long latencyInMillis = endTimestamp - startTimestamp;
-    putInBlockQueue(startTimestamp, latencyInMillis, code);
+    if (phaseId == 3) {
+      GetOperationThread getOperationThread = new GetOperationThread(targetUrl, queue);
+      getOperationThread.run();
+    }
+    putInBlockQueue(startTimestamp, latencyInMillis, code, "POST");
   }
 
-//  private int executeConnection(String targetURL, JsonObject body) {
+//  private int executePostConnection(String targetURL, JsonObject body) {
 //    HttpURLConnection connection = null;
 //    int code = -1;
 //    try {
@@ -137,7 +142,7 @@ public class ClientThread extends Thread {
 //    return code;
 //  }
 
-  private int executeConnection(String baseUrl, JsonObject body) {
+  private int executePostConnection(String baseUrl, JsonObject body) {
     HttpResponse jsonResponse = null;
     HttpRequestWithBody httpRequestWithBody = Unirest.post(baseUrl)
             .header("Accept", "application/json")
@@ -152,6 +157,7 @@ public class ClientThread extends Thread {
       } else {
         SharedMeasure.numOfUnsuccessfulRequests.incrementAndGet();
         if (code == 404) {
+          logger.info(e.getBody());
           logger.info("Resource not found.");
         } else if (code == 500) {
           logger.error("Internal server error.");
@@ -159,14 +165,15 @@ public class ClientThread extends Thread {
       }
       return code;
     } catch (UnirestException e) {
-      e.printStackTrace();
+      SharedMeasure.numOfUnsuccessfulRequests.incrementAndGet();
+      logger.error("Read time out");
     }
     return 500;
   }
 
 
-  private void putInBlockQueue(long startTimestamp, long latencyInMillis, int code) {
-    SingleThreadMeasure threadMeasure = new SingleThreadMeasure(startTimestamp, "POST", latencyInMillis, code);
+  private void putInBlockQueue(long startTimestamp, long latencyInMillis, int code, String requestType) {
+    SingleThreadMeasure threadMeasure = new SingleThreadMeasure(startTimestamp, requestType, latencyInMillis, code);
     // add to blocking queue
     try {
       queue.put(threadMeasure);
